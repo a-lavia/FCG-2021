@@ -30,7 +30,7 @@ function substraction(imageA,imageB,result) {
   for (var y = 0; y < imageA.height; y += 1) {
     for (var x = 0; x < imageA.width; x += 1) {
       channels.forEach(c => {
-        setPixel(x, y, result, getPixel(x, y, imageA, c) - getPixel(x, y, imageB, c), c);
+        setPixel(x, y, result, Math.abs(getPixel(x, y, imageA, c) - getPixel(x, y, imageB, c)), c);
       });
     }
   }
@@ -61,5 +61,7 @@ function getPixel(x, y, image, channel) {
 }
 
 function setPixel(x, y, image, value, channel) {
-  image.data[getIndex(x, y, image) + channel] = value;
+  if ((0 <= x) && (x < image.width) && (0 <= y) && (y < image.height)) {
+    image.data[getIndex(x, y, image) + channel] = value;
+  }
 }
