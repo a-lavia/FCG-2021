@@ -5,13 +5,13 @@ var pt    = new Array(4);
 var selPt = null;
 
 // Cuando la página está cargada, preparo los elementos en el canvas
-$(document).ready(function() 
+$(document).ready(function()
 {
 	// Obtenemos el ancho y el alto del documento
 	var w = document.documentElement.clientWidth;
 	var h = document.documentElement.clientHeight;
 
-	// Obtenemos los 4 círculos del canvas (circle) 
+	// Obtenemos los 4 círculos del canvas (circle)
 	// Estos círculos actuan como puntos de control de la curva
 	pt[0] = document.getElementById("p0");
 	pt[1] = document.getElementById("p1");
@@ -25,38 +25,38 @@ $(document).ready(function()
 
 	pt[1].setAttribute("cx", 0.35*w);
 	pt[1].setAttribute("cy", 0.6*h);
-	
+
 	pt[2].setAttribute("cx", 0.55*w);
 	pt[2].setAttribute("cy", 0.3*h);
-	
+
 	pt[3].setAttribute("cx", 0.8*w);
 	pt[3].setAttribute("cy", 0.9*h);
-	
+
 	// ********** Sección para linkear distintos eventos ********** //
 
 	// MOUSE-DOWN: Al apretar el botón del mouse
-	$("circle").on( "mousedown", function( event ) 
+	$("circle").on( "mousedown", function( event )
 	{
 		if ( ! selPt ) selPt = event.target; // selecciono el punto sobre el que sucedió el evento
 	});
 
 	// MOUSE-UP: Al soltar el botón del mouse
-	$("circle").on( "mouseup", function( event ) 
+	$("circle").on( "mouseup", function( event )
 	{
 		selPt = null; // quito la selección cuando el usuario levanta el dedo del mouse
 	});
 
 	// MOUSE-LEAVE: Al salir del foco también libero la selección
-	$(document).on( "mouseleave", function( event ) 
+	$(document).on( "mouseleave", function( event )
 	{
 		selPt = null; // quito la selección cuando el usuario levanta el dedo del mouse
 	});
 
 	// MOUSE-MOVE: Al mover el mouse
-	$(document).on( "mousemove", function( event ) 
+	$(document).on( "mousemove", function( event )
 	{
 		// Si hay un círuclo seleccionado...
-		if ( selPt ) 
+		if ( selPt )
 		{
 			// ... actualizo la prosición de ese punto para que se mueva junto con el mouse
 			selPt.setAttribute("cx", event.clientX);
@@ -66,13 +66,13 @@ $(document).ready(function()
 			UpdateLines();
 
 			// y finalmente actualizo la posición de los puntos y redibujo mi escena WebGL
-			UpdatePoints();			
+			UpdatePoints();
 			DrawScene();
 		}
 	});
 
 	// RESIZE: Si me cambian el tamaño de la ventana del navegador...
-	$(window).on( "resize", function( event ) 
+	$(window).on( "resize", function( event )
 	{
 		// ...también tengo que actualizar el tamaño del canvas y del viewport,
 		UpdateCanvasSize();
@@ -83,7 +83,7 @@ $(document).ready(function()
 
 	// ********** Fin de linkeo de eventos ********** //
 
-	// 1) Actualizo las lineas que conectan los puntos de control y la curva objetivo	
+	// 1) Actualizo las lineas que conectan los puntos de control y la curva objetivo
 	UpdateLines();
 
 	// 2) Inicializo mi ventana WebGL
@@ -100,7 +100,7 @@ function UpdateLines()
 {
 	// Son tres segmentos de lineas
 	var line = new Array(3);
-	
+
 	// En index.html ya definimos 3 segmentos de linea dentro del canvas
 	// Vamos a obtenerlos y a actualziar sus coordeandas de inicio y fin
 	line[0] = document.getElementById("line0");
@@ -115,7 +115,7 @@ function UpdateLines()
 	var d = "M" + x1 + "," + y1 + " C";
 
 	// Visitamos cada punto (empezando en 1)
-	for ( var i=0; i<3; ++i ) 
+	for ( var i=0; i<3; ++i )
 	{
 		// Obtenemos su x e y
 		var x2 = pt[i+1].getAttribute("cx");
@@ -134,7 +134,7 @@ function UpdateLines()
 		x1 = x2;
 		y1 = y2;
 	}
-	
+
 	// Seteamos el atributo de los puntos de control en el path
 	// Más detalles en https://www.w3schools.com/graphics/svg_path.asp
 	var c = document.getElementById("curve");
@@ -155,23 +155,30 @@ function InitWebGL()
 	canvas.oncontextmenu = function() {return false;};
 
 	// Contexto GL
-	gl = canvas.getContext("webgl", {antialias: false, depth: false});	
-	if (!gl) 
+	gl = canvas.getContext("webgl", {antialias: false, depth: false});
+	if (!gl)
 	{
 		alert("No se pudo inicializar WebGL. Es probable que tu navegador no lo soporte.");
 		return;
 	}
-	
+
 	// Color "clear" y ancho de linea (blanco)
 	gl.clearColor(1.0, 1.0, 1.0, 0.0);
 	gl.lineWidth(1.0);
-	
+
 	// Tenemos dos programas (dos conjuntos de shaders)
-	// Para ambos, su comportamiento y buffers están contenidos en  
+	// Para ambos, su comportamiento y buffers están contenidos en
 	// dos clases: LineDrawer y CurveDrawer
 	lineDrawer  = new LineDrawer();
 	curveDrawer = new CurveDrawer();
-	
+
+	//Actualizo cada 33 ms
+	var delta = 33;
+	setInterval(function() {
+  	curveDrawer.updateTime(delta);
+		DrawScene();
+	}, delta);
+
 	// Configuramos el tamaño del canvas
 	UpdateCanvasSize();
 }
@@ -198,7 +205,7 @@ function UpdateCanvasSize()
 
 	// Actualizamos el tamaño del viewport (= al canvas)
 	gl.viewport( 0, 0, canvas.width, canvas.height );
-	
+
 	// Finalmente actualizamos las matrices de proyección (para los segmentos
 	// y para las curvas) utilizando el nuevo tamaño del viewport
 	lineDrawer.setViewport( width, height );
@@ -221,10 +228,10 @@ function UpdatePoints()
 function DrawScene()
 {
 	// Limpiamos la pantalla (y el bufer de profundidad, algo que no estamos usando
-	// y podríamos borrarlo de esta linea sin ningún efecto) 
+	// y podríamos borrarlo de esta linea sin ningún efecto)
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	
-	// Le pedimos a las lineas y a la curva bezier que se dibujen 
+
+	// Le pedimos a las lineas y a la curva bezier que se dibujen
 	// (ver las definiciónes en las clases LineDrawer y CurveDrawer)
 	curveDrawer.draw();
 	lineDrawer.draw();
@@ -238,13 +245,13 @@ function InitShaderProgram( vsSource, fsSource )
 	const vs = CompileShader( gl.VERTEX_SHADER,   vsSource );
 	const fs = CompileShader( gl.FRAGMENT_SHADER, fsSource );
 
-	// Crea y linkea el programa 
+	// Crea y linkea el programa
 	const prog = gl.createProgram();
 	gl.attachShader(prog, vs);
 	gl.attachShader(prog, fs);
 	gl.linkProgram(prog);
 
-	if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) 
+	if (!gl.getProgramParameter(prog, gl.LINK_STATUS))
 	{
 		alert('No se pudo inicializar el programa: ' + gl.getProgramInfoLog(prog));
 		return null;
@@ -264,7 +271,7 @@ function CompileShader( type, source )
 	gl.compileShader(shader);
 
 	// 	Verificamos si la compilación fue exitosa
-	if (!gl.getShaderParameter( shader, gl.COMPILE_STATUS) ) 
+	if (!gl.getShaderParameter( shader, gl.COMPILE_STATUS) )
 	{
 		alert('Ocurrió un error durante la compilación del shader:\n' + gl.getShaderInfoLog(shader));
 		gl.deleteShader(shader);
@@ -275,8 +282,8 @@ function CompileShader( type, source )
 
 /********** CLASE PARA DIBUJAR LOS SEGMENTOS ENTRE LOS PUNTOS DE CONTROL USANDO WEBGL **********/
 
-// Clase muy similar a CurveDrawer. Pueden utilizarla como modelo para resolver el TP. 
-class LineDrawer 
+// Clase muy similar a CurveDrawer. Pueden utilizarla como modelo para resolver el TP.
+class LineDrawer
 {
 	// Inicialización de los shaders y buffers
 	constructor()
@@ -287,29 +294,29 @@ class LineDrawer
 		// Obtenemos la ubicación de las varibles uniformes en los shaders,
 		// en este caso, la matriz de transformación 'mvp'
 		this.mvp = gl.getUniformLocation( this.prog, 'mvp' );
-		
+
 		// Obtenemos la ubicación de los atributos de los vértices
 		// en este caso, la posición 'pos'
 		this.vertPos = gl.getAttribLocation( this.prog, 'pos' );
-				
+
 		// Creamos el buffer para los vértices.
-		// En este caso no tenemos triángulos, pero si segmentos 
-		// definidos entre dos puntos. 
+		// En este caso no tenemos triángulos, pero si segmentos
+		// definidos entre dos puntos.
 		this.buffer = gl.createBuffer();
 
 		// Si bien creamos el buffer, no vamos a ponerle contenido en este
 		// constructor. La actualziación de la información de los vértices
 		// la haremos dentro de updatePoints().
-		
+
 	}
 
 	// Actualización del viewport (se llama al inicializar la web o al cambiar el tamaño de la pantalla)
 	setViewport( width, height )
-	{		
+	{
 		// Calculamos la matriz de proyección.
-		// Como nos vamos a manejar únicamente en 2D, no tiene sentido utilizar perspectiva. 
+		// Como nos vamos a manejar únicamente en 2D, no tiene sentido utilizar perspectiva.
 		// Simplemente inicializamos la matriz para que escale los elementos de la escena
-		// al ancho y alto del canvas, invirtiendo la coordeanda y. La matriz está en formato 
+		// al ancho y alto del canvas, invirtiendo la coordeanda y. La matriz está en formato
 		// column-major.
 		var trans = [ 2/width,0,0,0,  0,-2/height,0,0, 0,0,1,0, -1,1,0,1 ];
 
@@ -323,11 +330,11 @@ class LineDrawer
 	{
 		// Armamos el arreglo
 		var p = [];
-		for ( var i=0; i<4; ++i ) 
+		for ( var i=0; i<4; ++i )
 		{
 			var x = pt[i].getAttribute("cx");
 			var y = pt[i].getAttribute("cy");
-			
+
 			p.push(x);
 			p.push(y);
 		}
@@ -346,11 +353,11 @@ class LineDrawer
 		// Binding del buffer de posiciones
 		gl.bindBuffer( gl.ARRAY_BUFFER, this.buffer );
 
-		// Habilitamos el atributo 
+		// Habilitamos el atributo
 		gl.vertexAttribPointer( this.vertPos, 2, gl.FLOAT, false, 0, 0 );
 		gl.enableVertexAttribArray( this.vertPos );
 
-		// Dibujamos lineas utilizando primitivas gl.LINE_STRIP 
+		// Dibujamos lineas utilizando primitivas gl.LINE_STRIP
 		// https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawArrays
 		gl.drawArrays( gl.LINE_STRIP, 0, 4 );
 	}
