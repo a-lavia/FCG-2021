@@ -4,7 +4,7 @@ var meshDrawer;         // clase para contener el comportamiento de la malla
 var canvas, gl;         // canvas y contexto WebGL
 var perspectiveMatrix;	// matriz de perspectiva
 
-var rotX=0, rotY=0, transZ=3, autorot=0; // rotaciones 
+var rotX=0, rotY=0, transZ=3, autorot=0; // rotaciones
 
 // Funcion de inicialización, se llama al cargar la página
 function InitWebGL()
@@ -13,20 +13,20 @@ function InitWebGL()
 	canvas = document.getElementById("canvas");
 	canvas.oncontextmenu = function() {return false;};
 	gl = canvas.getContext("webgl", {antialias: false, depth: true});	// Initialize the GL context
-	if (!gl) 
+	if (!gl)
 	{
 		alert("Imposible inicializar WebGL. Tu navegador quizás no lo soporte.");
 		return;
 	}
-	
+
 	// Inicializar color clear
 	gl.clearColor(0,0,0,0);
-	gl.enable(gl.DEPTH_TEST); // habilitar test de profundidad 
-	
-	// Inicializar los shaders y buffers para renderizar	
+	gl.enable(gl.DEPTH_TEST); // habilitar test de profundidad
+
+	// Inicializar los shaders y buffers para renderizar
 	boxDrawer  = new BoxDrawer();
 	meshDrawer = new MeshDrawer();
-	
+
 	// Setear el tamaño del viewport
 	UpdateCanvasSize();
 }
@@ -63,7 +63,7 @@ function UpdateProjectionMatrix()
 	var n = (transZ - 1.74);
 
 	const min_n = 0.001;
-	
+
 	if ( n < min_n ) n = min_n;
 	var f = (transZ + 1.74);;
 	var fov = 3.145 * 60 / 180;
@@ -78,18 +78,18 @@ function UpdateProjectionMatrix()
 	];
 }
 
-// Funcion que reenderiza la escena. 
+// Funcion que reenderiza la escena.
 function DrawScene()
 {
-	// 1. Obtenemos las matrices de transformación 
+	// 1. Obtenemos las matrices de transformación
 	var mvp = GetModelViewProjection( perspectiveMatrix, 0, 0, transZ, rotX, autorot+rotY );
 
 	// 2. Limpiamos la escena
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-		
+
 	// 3. Le pedimos a cada objeto que se dibuje a si mismo
 	meshDrawer.draw( mvp );
-	if ( showBox.checked ) 
+	if ( showBox.checked )
 	{
 		boxDrawer.draw( mvp );
 	}
@@ -103,13 +103,13 @@ function InitShaderProgram( vsSource, fsSource )
 	const vs = CompileShader( gl.VERTEX_SHADER,   vsSource );
 	const fs = CompileShader( gl.FRAGMENT_SHADER, fsSource );
 
-	// Crea y linkea el programa 
+	// Crea y linkea el programa
 	const prog = gl.createProgram();
 	gl.attachShader(prog, vs);
 	gl.attachShader(prog, fs);
 	gl.linkProgram(prog);
 
-	if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) 
+	if (!gl.getProgramParameter(prog, gl.LINK_STATUS))
 	{
 		alert('No se pudo inicializar el programa: ' + gl.getProgramInfoLog(prog));
 		return null;
@@ -129,7 +129,7 @@ function CompileShader( type, source )
 	gl.compileShader(shader);
 
 	// 	Verificamos si la compilación fue exitosa
-	if (!gl.getShaderParameter( shader, gl.COMPILE_STATUS) ) 
+	if (!gl.getShaderParameter( shader, gl.COMPILE_STATUS) )
 	{
 		alert('Ocurrió un error durante la compilación del shader:' + gl.getShaderInfoLog(shader));
 		gl.deleteShader(shader);
@@ -143,12 +143,12 @@ function CompileShader( type, source )
 function MatrixMult( A, B )
 {
 	var C = [];
-	for ( var i=0; i<4; ++i ) 
+	for ( var i=0; i<4; ++i )
 	{
-		for ( var j=0; j<4; ++j ) 
+		for ( var j=0; j<4; ++j )
 		{
 			var v = 0;
-			for ( var k=0; k<4; ++k ) 
+			for ( var k=0; k<4; ++k )
 			{
 				v += A[j+4*k] * B[k+4*i];
 			}
@@ -163,13 +163,13 @@ function MatrixMult( A, B )
 var showBox; // boleano para determinar si se debe o no mostrar la caja
 
 // Al cargar la página
-window.onload = function() 
+window.onload = function()
 {
 	showBox = document.getElementById('show-box');
 	InitWebGL();
 
 	// Evento de zoom (ruedita)
-	canvas.zoom = function( s ) 
+	canvas.zoom = function( s )
 	{
 		transZ *= s/canvas.height + 1;
 		UpdateProjectionMatrix();
@@ -177,23 +177,23 @@ window.onload = function()
 	}
 	canvas.onwheel = function() { canvas.zoom(0.3*event.deltaY); }
 
-	// Evento de click 
-	canvas.onmousedown = function() 
+	// Evento de click
+	canvas.onmousedown = function()
 	{
 		var cx = event.clientX;
 		var cy = event.clientY;
-		if ( event.ctrlKey ) 
+		if ( event.ctrlKey )
 		{
-			canvas.onmousemove = function() 
+			canvas.onmousemove = function()
 			{
 				canvas.zoom(5*(event.clientY - cy));
 				cy = event.clientY;
 			}
-		} 
-		else 
+		}
+		else
 		{
 			// Si se mueve el mouse, actualizo las matrices de rotación
-			canvas.onmousemove = function() 
+			canvas.onmousemove = function()
 			{
 				rotY += (cx - event.clientX)/canvas.width*5;
 				rotX += (cy - event.clientY)/canvas.height*5;
@@ -206,11 +206,11 @@ window.onload = function()
 	}
 
 	// Evento soltar el mouse
-	canvas.onmouseup = canvas.onmouseleave = function() 
+	canvas.onmouseup = canvas.onmouseleave = function()
 	{
 		canvas.onmousemove = null;
 	}
-	
+
 	// Dibujo la escena
 	DrawScene();
 };
@@ -227,10 +227,10 @@ var timer;
 function AutoRotate( param )
 {
 	// Si hay que girar...
-	if ( param.checked ) 
+	if ( param.checked )
 	{
 		// Vamos rotando una cantiad constante cada 30 ms
-		timer = setInterval( function() 
+		timer = setInterval( function()
 			{
 				var v    = document.getElementById('rotation-speed').value;
 				autorot += 0.0005 * v;
@@ -242,8 +242,8 @@ function AutoRotate( param )
 			}, 30
 		);
 		document.getElementById('rotation-speed').disabled = false;
-	} 
-	else 
+	}
+	else
 	{
 		clearInterval( timer );
 		document.getElementById('rotation-speed').disabled = true;
@@ -267,10 +267,10 @@ function SwapYZ( param )
 // Cargar archivo obj
 function LoadObj( param )
 {
-	if ( param.files && param.files[0] ) 
+	if ( param.files && param.files[0] )
 	{
 		var reader = new FileReader();
-		reader.onload = function(e) 
+		reader.onload = function(e)
 		{
 			var mesh = new ObjMesh;
 			mesh.parse( e.target.result );
@@ -299,20 +299,22 @@ function LoadObj( param )
 // Cargar textura
 function LoadTexture( param )
 {
-	if ( param.files && param.files[0] ) 
+	if ( param.files && param.files[0] )
 	{
 		var reader = new FileReader();
-		reader.onload = function(e) 
+		reader.onload = function(e)
 		{
 			var img = document.getElementById('texture-img');
-			img.onload = function() 
+			img.onload = function()
 			{
 				meshDrawer.setTexture( img );
 				DrawScene();
 			}
 			img.src = e.target.result;
+
+			var check = document.getElementById('show-texture');
+			check.checked = true;
 		};
 		reader.readAsDataURL( param.files[0] );
 	}
 }
-
