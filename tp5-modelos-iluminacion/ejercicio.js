@@ -308,7 +308,7 @@ var meshFS = `
 		vec4 Ks = vec4(1, 1, 1, 1);
 		vec4 I = vec4(1, 1, 1, 1);
 
-		vec3 n = mn*normCoord;
+		vec3 n = mn*normalize(normCoord);
 		vec3 l = lightDir;
 		vec3 v = visionDir;
 		vec3 h = normalize(l+v);
