@@ -103,16 +103,27 @@ class MeshDrawer
 		this.prog = InitShaderProgram(meshVS, meshFS);
 
 		// 2. Obtenemos los IDs de las variables uniformes en los shaders
+
+		//Matrices
 		this.mvp = gl.getUniformLocation(this.prog, 'mvp');
 		this.mv = gl.getUniformLocation(this.prog, 'mv');
+		this.mn = gl.getUniformLocation(this.prog, 'mn');
+
+		//Texturas
+		this.sampler = gl.getUniformLocation(this.prog, 'texGPU');
+		this.enableTex = gl.getUniformLocation(this.prog, 'enableTex');
+
+		//Parámetros para luz difusa
+		this.lightDir = gl.getUniformLocation(this.prog, 'lightDir');
+
+		//Parámetros para luz especular
+		this.shininess = gl.getUniformLocation(this.prog, 'shininess');
+
 
 		// 3. Obtenemos los IDs de los atributos de los vértices en los shaders
 		this.pos = gl.getAttribLocation(this.prog, 'pos');
 		this.tex = gl.getAttribLocation(this.prog, 'tex');
 		this.norm = gl.getAttribLocation(this.prog, 'norm');
-
-		this.sampler = gl.getUniformLocation(this.prog, 'texGPU');
-		this.enableTex = gl.getUniformLocation(this.prog, 'enableTex');
 
 		// 4. Creamos los buffers
 		this.posBuffer = gl.createBuffer();
@@ -174,7 +185,8 @@ class MeshDrawer
 
 		// 2. Setear uniformes con las matrices de transformaciones
 		gl.uniformMatrix4fv(this.mvp, false, matrixMVP);
-		gl.uniformMatrix4fv(this.mv, false, matrixMV);
+		gl.uniformMatrix3fv(this.mv, false, matrixMV);
+		gl.uniformMatrix3fv(this.mn, false, matrixNormal);
 
    	// 3. Habilitar atributos: vértices, normales, texturas
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
@@ -224,12 +236,16 @@ class MeshDrawer
 	setLightDir( x, y, z )
 	{
 		// [COMPLETAR] Setear variables uniformes en el fragment shader para especificar la dirección de la luz
+		gl.useProgram(this.prog);
+		gl.uniform3f(this.lightDir, x, y, z);
 	}
 
 	// Este método se llama al actualizar el brillo del material
 	setShininess( shininess )
 	{
 		// [COMPLETAR] Setear variables uniformes en el fragment shader para especificar el brillo.
+		gl.useProgram(this.prog);
+		gl.uniform1f(this.shininess, shininess);
 	}
 }
 
@@ -250,18 +266,18 @@ var meshVS = `
 	attribute vec3 norm;
 
 	uniform mat4 mvp;
-	uniform mat4 mv;
+	uniform mat3 mv;
 
+	varying vec3 visionDir;
 	varying vec2 texCoord;
 	varying vec3 normCoord;
-	varying vec4 vertCoord;
 
 	void main()
 	{
 		gl_Position = mvp * vec4(pos,1);
+		visionDir = -mv * pos;
 		texCoord = tex;
 		normCoord = norm;
-
 	}
 `;
 
@@ -276,19 +292,30 @@ var meshFS = `
 
 	uniform mat3 mn;
 
+	uniform vec3 lightDir;
+	uniform float shininess;
+
 	uniform sampler2D texGPU;
 	uniform bool enableTex;
 
+	varying vec3 visionDir;
 	varying vec2 texCoord;
 	varying vec3 normCoord;
-	varying vec4 vertCoord;
 
 	void main()
 	{
-		if (enableTex) {
-			gl_FragColor = texture2D(texGPU, texCoord);
-		} else {
-			gl_FragColor = vec4( normCoord.x, normCoord.y, normCoord.z, 1 );
-		}
+		vec4 Kd = enableTex ? texture2D(texGPU, texCoord) : vec4(1, 1, 1, 1);
+		vec4 Ks = vec4(1, 1, 1, 1);
+		vec4 I = vec4(1, 1, 1, 1);
+
+		vec3 n = mn*normCoord;
+		vec3 l = lightDir;
+		vec3 v = visionDir;
+		vec3 h = normalize(l+v);
+
+		float cosTetha = dot(n, l);
+		float cosOmega = dot(n, h);
+
+		gl_FragColor = I * max(0., cosTetha) * (Kd + Ks*pow(max(0., cosOmega), shininess) / cosTetha);
 	}
 `;
