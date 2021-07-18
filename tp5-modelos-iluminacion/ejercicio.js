@@ -165,9 +165,24 @@ class MeshDrawer
 	// Esta función se llama cada vez que el usuario cambia el estado del checkbox 'Intercambiar Y-Z'
 	// El argumento es un boleano que indica si el checkbox está tildado
 	swapYZ( swap )
-	{
-		// [COMPLETAR] Setear variables uniformes en el vertex shader
-	}
+    {
+        // [COMPLETAR] Setear variables uniformes en el vertex shader
+        this.invertedPositions = [];
+        for (var i = 0; i < this.vertPos.length / 3; i++) {
+            var tidx = i * 3;
+          	this.invertedPositions.push(this.vertPos[tidx]);
+          	this.invertedPositions.push(this.vertPos[tidx + 2]);
+          	this.invertedPositions.push(this.vertPos[tidx + 1]);
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
+        if (swap){
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.invertedPositions), gl.STATIC_DRAW);
+        }
+        else {
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertPos), gl.STATIC_DRAW);
+        }
+
+    }
 
 	// Esta función se llama para dibujar la malla de triángulos
 	// El argumento es la matriz model-view-projection (matrixMVP),
