@@ -217,7 +217,7 @@ class MeshDrawer
 
 		// 2. Setear uniformes con las matrices de transformaciones
 		gl.uniformMatrix4fv(this.mvp, false, matrixMVP);
-		gl.uniformMatrix3fv(this.mv, false, matrixMV);
+		gl.uniformMatrix4fv(this.mv, false, matrixMV);
 		gl.uniformMatrix3fv(this.mn, false, matrixNormal);
 
    	// 3. Habilitar atributos: vértices, normales, texturas
@@ -298,16 +298,16 @@ var meshVS = `
 	attribute vec3 norm;
 
 	uniform mat4 mvp;
-	uniform mat3 mv;
+	uniform mat4 mv;
 
-	varying vec3 visionDir;
+	varying vec4 visionDir;
 	varying vec2 texCoord;
 	varying vec3 normCoord;
 
 	void main()
 	{
 		gl_Position = mvp * vec4(pos,1);
-		visionDir = -mv * pos;
+		visionDir = -mv * vec4(pos, 1);
 		texCoord = tex;
 		normCoord = norm;
 	}
@@ -330,7 +330,7 @@ var meshFS = `
 	uniform sampler2D texGPU;
 	uniform bool enableTex;
 
-	varying vec3 visionDir;
+	varying vec4 visionDir;
 	varying vec2 texCoord;
 	varying vec3 normCoord;
 
@@ -342,7 +342,7 @@ var meshFS = `
 
 		vec3 n = mn*normalize(normCoord);
 		vec3 l = lightDir;
-		vec3 v = visionDir;
+		vec3 v = visionDir.xyz;
 		vec3 h = normalize(l+v);
 
 		float cosTetha = dot(n, l);
