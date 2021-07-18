@@ -146,6 +146,8 @@ class MeshDrawer
 	setMesh( vertPos, texCoords, normals )
 	{
 		// [COMPLETAR] Actualizar el contenido del buffer de vértices y otros atributos..
+		this.vertPos = vertPos;
+		this.normals = normals;
 		this.numTriangles = vertPos.length / 3 / 3;
 
 		// 1. Binding y seteo del buffer de vértices
@@ -165,24 +167,39 @@ class MeshDrawer
 	// Esta función se llama cada vez que el usuario cambia el estado del checkbox 'Intercambiar Y-Z'
 	// El argumento es un boleano que indica si el checkbox está tildado
 	swapYZ( swap )
-    {
-        // [COMPLETAR] Setear variables uniformes en el vertex shader
-        this.invertedPositions = [];
-        for (var i = 0; i < this.vertPos.length / 3; i++) {
-            var tidx = i * 3;
-          	this.invertedPositions.push(this.vertPos[tidx]);
-          	this.invertedPositions.push(this.vertPos[tidx + 2]);
-          	this.invertedPositions.push(this.vertPos[tidx + 1]);
-        }
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
-        if (swap){
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.invertedPositions), gl.STATIC_DRAW);
-        }
-        else {
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertPos), gl.STATIC_DRAW);
-        }
+  {
+      // [COMPLETAR] Setear variables uniformes en el vertex shader
+      this.invertedPositions = [];
+      for (var i = 0; i < this.vertPos.length / 3; i++) {
+          var tidx = i * 3;
+        	this.invertedPositions.push(this.vertPos[tidx]);
+        	this.invertedPositions.push(this.vertPos[tidx + 2]);
+        	this.invertedPositions.push(this.vertPos[tidx + 1]);
+      }
 
-    }
+			this.invertedNormals = [];
+			for (var i = 0; i < this.normals.length / 3; i++) {
+          var tidx = i * 3;
+        	this.invertedNormals.push(this.normals[tidx]);
+        	this.invertedNormals.push(this.normals[tidx + 2]);
+        	this.invertedNormals.push(this.normals[tidx + 1]);
+      }
+
+      if (swap){
+				  gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.invertedPositions), gl.STATIC_DRAW);
+
+					gl.bindBuffer(gl.ARRAY_BUFFER, this.normBuffer);
+					gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.invertedNormals), gl.STATIC_DRAW);
+      } else {
+				  gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertPos), gl.STATIC_DRAW);
+
+					gl.bindBuffer(gl.ARRAY_BUFFER, this.normBuffer);
+					gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.normals), gl.STATIC_DRAW);
+      }
+
+  }
 
 	// Esta función se llama para dibujar la malla de triángulos
 	// El argumento es la matriz model-view-projection (matrixMVP),
